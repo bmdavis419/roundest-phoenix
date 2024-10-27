@@ -1,0 +1,15 @@
+<div class="w-full grow flex flex-col items-center justify-center gap-8">
+  <div class="md:grid grid-cols-2">
+    <.form for={%{}} action={~p"/entries/#{@firstEntry.id}/#{@secondEntry.id}/vote"} method="post">
+      <button class="hover:bg-gray-700" type="submit">
+        <img src={@firstEntry.url} alt="first image" />
+      </button>
+    </.form>
+
+    <.form for={%{}} action={~p"/entries/#{@secondEntry.id}/#{@firstEntry.id}/vote"} method="post">
+      <button class="hover:bg-gray-700" type="submit">
+        <img src={@secondEntry.url} alt="first image" />
+      </button>
+    </.form>
+  </div>
+</div>

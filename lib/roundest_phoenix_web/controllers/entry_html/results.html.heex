@@ -1,0 +1,11 @@
+<div class="flex flex-col gap-8 items-center justify-center">
+  <%= for entry <- @entries do %>
+    <div class="flex flex-row items-center justify-center">
+      <img src={entry.url} alt="Theo Preview" class="h-[250px]" />
+      <div class="text-xl">
+        <h4>Up Votes: <span class="font-bold"><%= entry.up_vote %></span></h4>
+        <h4>Down Votes: <span class="font-bold"><%= entry.down_vote %></span></h4>
+      </div>
+    </div>
+  <% end %>
+</div>
