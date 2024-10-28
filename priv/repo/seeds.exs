@@ -1,23 +1,94 @@
+# Make sure Mix is available and the application is started
+Mix.start()
+# Start the applications we need
+Application.ensure_all_started(:httpoison)
+
 alias RoundestPhoenix.Repo
-alias RoundestPhoenix.Content.Entry
+alias RoundestPhoenix.Pokemon
 
-Repo.delete_all(Entry)
+# Start your application (this will start Ecto and other dependencies)
+Application.ensure_all_started(:roundest_phoenix)
 
-sample_urls = [
-  "https://bg.image.engineering/?image=https%3A%2F%2Futfs.io%2Fa%2Fbsqdevxuwl%2FIDWGSvlwlJtcJ7SQWwgTmQCGsgUcRqAJuznO9foPVrDvBbM6",
-  "https://bg.image.engineering/?image=https%3A%2F%2Futfs.io%2Fa%2Fbsqdevxuwl%2FIDWGSvlwlJtcen927zcIQ0UcR8v9ZwzV7TfHjK4GAC12FJgs",
-  "https://bg.image.engineering/?image=https%3A%2F%2Futfs.io%2Fa%2Fbsqdevxuwl%2FIDWGSvlwlJtcs2AqwZdine8LXW4a2ZlNrjKJpmgYVvAI1xD6",
-  "https://bg.image.engineering/?image=https%3A%2F%2Futfs.io%2Fa%2Fbsqdevxuwl%2FIDWGSvlwlJtc2CKSJQhmNKzLyfvJxIPAFn0leMhrGOcRHkj9",
-  "https://bg.image.engineering/?image=https%3A%2F%2Futfs.io%2Fa%2Fbsqdevxuwl%2FIDWGSvlwlJtcuixX44IJOdhNP96sVvxACeU7KH3BYbmZWoap",
-  "https://bg.image.engineering/?image=https%3A%2F%2Futfs.io%2Fa%2Fbsqdevxuwl%2FIDWGSvlwlJtct2VZVfQjYdnWmzaOXrpf2MUGsbv4gPR3t09C",
-  "https://bg.image.engineering/?image=https%3A%2F%2Futfs.io%2Fa%2Fbsqdevxuwl%2FIDWGSvlwlJtcchUyCX0Gv8XtYSAb43sLgxHapZIzuMTPlNQm",
-  "https://bg.image.engineering/?image=https%3A%2F%2Futfs.io%2Fa%2Fbsqdevxuwl%2FIDWGSvlwlJtcKyDoM7CrNG2lbDE5MWRzojmA9efVkhwn4876"
-]
+defmodule PokemonSeeder do
+  @graphql_url "https://beta.pokeapi.co/graphql/v1beta"
+  @query """
+  query GetAllPokemon {
+    pokemon_v2_pokemon {
+      id
+      pokemon_v2_pokemonspecy {
+        name
+      }
+    }
+  }
+  """
 
-Enum.each(sample_urls, fn url ->
-  Repo.insert!(%Entry{
-    url: url,
-    up_vote: 0,
-    down_vote: 0
-  })
-end)
+  def fetch_all_pokemon do
+    headers = [{"Content-Type", "application/json"}]
+    body = Jason.encode!(%{query: @query})
+
+    case HTTPoison.post(@graphql_url, body, headers) do
+      {:ok, %HTTPoison.Response{status_code: 200, body: response_body}} ->
+        case Jason.decode(response_body) do
+          {:ok, %{"data" => data}} ->
+            {:ok, data["pokemon_v2_pokemon"]}
+
+          {:error, error} ->
+            {:error, "Failed to decode JSON: #{inspect(error)}"}
+        end
+
+      {:ok, %HTTPoison.Response{status_code: status_code}} ->
+        {:error, "Request failed with status code: #{status_code}"}
+
+      {:error, %HTTPoison.Error{reason: reason}} ->
+        {:error, "HTTP request failed: #{inspect(reason)}"}
+    end
+  end
+
+  def get_pokemon_names do
+    case fetch_all_pokemon() do
+      {:ok, pokemon_list} ->
+        pokemon_data =
+          Enum.map(pokemon_list, fn pokemon ->
+            %{
+              id: pokemon["id"],
+              name: pokemon["pokemon_v2_pokemonspecy"]["name"]
+            }
+          end)
+
+        {:ok, pokemon_data}
+
+      error ->
+        error
+    end
+  end
+end
+
+# Clear existing Pokemon
+IO.puts("Clearing existing Pokemon...")
+Repo.delete_all(Pokemon)
+
+# Fetch and insert new Pokemon
+IO.puts("Fetching Pokemon data...")
+
+case PokemonSeeder.get_pokemon_names() do
+  {:ok, pokemon_list} ->
+    IO.puts("Inserting #{length(pokemon_list)} Pokemon...")
+
+    Enum.each(pokemon_list, fn pokemon_data ->
+      %Pokemon{}
+      |> Pokemon.changeset(%{
+        name: pokemon_data.name,
+        dex_id: pokemon_data.id,
+        up_votes: 0,
+        down_votes: 0
+      })
+      |> Repo.insert!()
+
+      IO.puts("Inserted Pokemon: #{pokemon_data.name}")
+    end)
+
+    IO.puts("Seeding completed successfully!")
+
+  {:error, error} ->
+    IO.puts("Error during seeding: #{inspect(error)}")
+end
