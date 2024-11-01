@@ -17,7 +17,9 @@ defmodule RoundestPhoenix.Application do
       # Start a worker by calling: RoundestPhoenix.Worker.start_link(arg)
       # {RoundestPhoenix.Worker, arg},
       # Start to serve requests, typically the last entry
-      RoundestPhoenixWeb.Endpoint
+      RoundestPhoenixWeb.Endpoint,
+      # cache
+      {Cachex, name: :pokemon_cache}
     ]
 
     # See https://hexdocs.pm/elixir/Supervisor.html
