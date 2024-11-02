@@ -4,6 +4,10 @@ defmodule RoundestPhoenixWeb.PokemonController do
   @cache_control_header "public, max-age=86400"
   @cache_ttl :timer.hours(24)
 
+  def show_results(conn, _params) do
+    render(conn, :results)
+  end
+
   def show_image(conn, %{"dex_id" => dex_id}) do
     image_url =
       "https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/#{dex_id}.png"

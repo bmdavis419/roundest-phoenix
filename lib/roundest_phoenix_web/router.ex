@@ -18,12 +18,9 @@ defmodule RoundestPhoenixWeb.Router do
   scope "/", RoundestPhoenixWeb do
     pipe_through :browser
 
-    get "/", EntryController, :index
-    live "/live/vote", VoteLive
-    post "/entries/:winner_id/:loser_id/vote", EntryController, :vote
-    get "/results", EntryController, :results
     get "/pokemon/image/:dex_id", PokemonController, :show_image
-    live "/live/pokemon", PokeLive
+    get "/results", PokemonController, :show_results
+    live "/", PokeLive
   end
 
   # Other scopes may use custom stacks.
