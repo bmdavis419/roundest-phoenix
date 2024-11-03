@@ -99,34 +99,22 @@ defmodule RoundestPhoenixWeb.PokeLive do
   end
 
   # tragic: https://kobrakai.de/kolumne/liveview-double-mount
-  def mount(params, session, socket) do
-    [firstEntry, secondEntry] = get_random_pair()
-    [nextFirstEntry, nextSecondEntry] = get_random_pair()
-
-    # this is to avoid a double mount
+  def mount(_params, _session, socket) do
     case connected?(socket) do
       true ->
-        connected_mount(params, session, socket)
+        [firstEntry, secondEntry] = get_random_pair()
+        [nextFirstEntry, nextSecondEntry] = get_random_pair()
+
+        {:ok,
+         socket
+         |> assign(:firstEntry, firstEntry)
+         |> assign(:secondEntry, secondEntry)
+         |> assign(:nextFirstEntry, nextFirstEntry)
+         |> assign(:nextSecondEntry, nextSecondEntry)}
 
       false ->
         {:ok, assign(socket, page: "loading")}
     end
-
-    {:ok,
-     socket
-     |> assign(:firstEntry, firstEntry)
-     |> assign(:secondEntry, secondEntry)
-     |> assign(:nextFirstEntry, nextFirstEntry)
-     |> assign(:nextSecondEntry, nextSecondEntry)}
-  end
-
-  defp connected_mount(_params, _session, socket) do
-    [firstEntry, secondEntry] = get_random_pair()
-
-    {:ok,
-     socket
-     |> assign(:firstEntry, firstEntry)
-     |> assign(:secondEntry, secondEntry)}
   end
 
   defp record_vote(socket, winner_id, loser_id) do
