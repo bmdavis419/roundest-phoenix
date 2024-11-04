@@ -21,6 +21,7 @@ defmodule RoundestPhoenixWeb.Router do
     get "/pokemon/image/:dex_id", PokemonController, :show_image
     get "/results", PokemonController, :show_results
     live "/", PokeLive
+    live "/simple", PokeSimpleLive
   end
 
   # Other scopes may use custom stacks.
